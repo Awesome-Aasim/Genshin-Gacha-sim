@@ -42,7 +42,7 @@ The other tabs contain pivottables. The last tab contains a 5-number summary and
 This tab contains _conditional_ probabilities. The top of the charts is pretty straightforward, however, remember to mention that these probabilities are _averages_. All the other probabilities are conditional ("Probability of B given A") probabilities.
 
 * Example: "_On average_, the probability of getting a 4-star _given_ I did not get a 5-star on pulls 0-8 (respective to 5-star pity) is 58.94%."
-* Another example: "_On average_, the probability of getting a 5-star _given_ I did not get a 4-star on pulls 0-8 (respective to 4-star pity) is 98.24%"
+* Another example: "_On average_, the probability of getting a 5-star _given_ I did not get a 4-star on pulls 0-8 (respective to 4-star pity) is 1.76%"
 
 ### Per rarity
 <img src="Resources\Excel chart 2.png" alt="The second Excel pivottables"/>
