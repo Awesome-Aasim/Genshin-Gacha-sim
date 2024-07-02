@@ -40,24 +40,28 @@ function main(wish) {
     var data = {
         4: {}, 5: {}
     }
+    var stop = false;
     while (wishCopy.pityHit[4] >= 1) {
         var d = calculateExpectedForWish(wishCopy);
         data[4][wishCopy.pityHit[4]] = d["Expected rates"][4];
-        if (data[4][wishCopy.pityHit[4]] >= wishCopy.avg[4]) {
+        if (data[4][wishCopy.pityHit[4]] >= wishCopy.avg[4] && !stop) {
             wishCopy2.pityHit[4] = wishCopy.pityHit[4];
+            stop = true;
         }
         wishCopy.pityHit[4]--;
     }
-
+    stop = false;
     while (wishCopy.pityHit[5] >= 1) {
         var d = calculateExpectedForWish(wishCopy);
         data[5][wishCopy.pityHit[5]] = d["Expected rates"][5];
-        if (data[5][wishCopy.pityHit[5]] >= wishCopy.avg[5]) {
+        if (data[5][wishCopy.pityHit[5]] >= wishCopy.avg[5] && !stop) {
             wishCopy2.pityHit[5] = wishCopy.pityHit[5];
+            stop = true;
         }
         wishCopy.pityHit[5]--;
     }
-    console.log(data);
+    console.table(data[4]);
+    console.table(data[5]);
     console.table(wishCopy2);
 }
 
