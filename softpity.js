@@ -129,14 +129,14 @@ function pull(prob, pityCounters, pityLow, pityHit, pityAvg) {
     */
     if (pityCounters[4] >= pityLow[4] - 1) {
         var cumulative = probabilities[3] + probabilities[4];
-        var incr = cumulative / (pityHit[4] - pityLow[4] + 1);
+        var incr = (cumulative - probabilities[4]) / (pityHit[4] - pityLow[4] + 1);
         probabilities[4] = incr * (pityCounters[4] - pityLow[4] + 2);
         probabilities[3] = cumulative - incr * (pityCounters[4] - pityLow[4] + 2);
     }
     if (pityCounters[5] >= pityLow[5] - 1) {
         var cumulativeTot = probabilities[3] + probabilities[4] + probabilities[5];
         var cumulativeBound = probabilities[3] + probabilities[5];
-        var incr = cumulativeTot / (pityHit[5] - pityLow[5] + 1);
+        var incr = (cumulativeTot - probabilities[5]) / (pityHit[5] - pityLow[5] + 1);
         probabilities[5] = incr * (pityCounters[5] - pityLow[5] + 2);
         probabilities[3] = cumulativeBound - incr * (pityCounters[5] - pityLow[5] + 2);
         if (probabilities[3] < 0) {
