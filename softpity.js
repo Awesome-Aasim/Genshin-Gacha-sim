@@ -30,11 +30,11 @@ function constructBellCurveCDF(start, end, mean, variance) {
         low: pos,
         high: 1
     }
-    
+
     return output;
 }
 
-function getNewGuarantee(pityLow, pityHit, pityAvg, currentGuarantee=null) {
+function getNewGuarantee(pityLow, pityHit, pityAvg, currentGuarantee = null) {
     var dist = constructBellCurveCDF(pityLow, pityHit, pityAvg, (pityHit - pityAvg) / 2);
     var num = Math.random();
     var result;
@@ -106,8 +106,8 @@ function buildDist(probabilities) {
     as with floating point numbers you lose a bit of precision
     Since JS all numbers are floats why not convert it to integer
     */
-    if (pos != 1) {
-        throw new TypeError("Probabilities must add up to 1");
+    if (parseFloat(pos).toFixed(4) != parseFloat(1).toFixed(4)) {
+        throw new TypeError("Probabilities must add up to 1. Current probabilities: " + JSON.stringify(probabilities));
     }
     return result;
 }
@@ -119,33 +119,53 @@ function buildDist(probabilities) {
  * @param {JSON} pityHit What values to use if the pity is hit (JSON)
  * @returns The result of the simulation, along with the old pity counters
  */
-function pull(prob, pityCounters, pityLow, pityHit, pityAvg, adjustedGuarantees) {
+function pull(prob, pityCounters, pityLow, pityHit, pityAvg) {
     // to avoid overwriting the probabilities, use object.assign to do a shallow copy
     var probabilities = Object.assign({}, prob);
-    if (pityCounters[4] == 0) {
-        adjustedGuarantees[4] = getNewGuarantee(pityLow[4], pityHit[4], pityAvg[4], adjustedGuarantees[4]);
-    }
-    if (pityCounters[5] == 0) {
-        adjustedGuarantees[5] = getNewGuarantee(pityLow[5], pityHit[5], pityAvg[5], adjustedGuarantees[5]);
-    }
     /*
     if 4* pity is reached, 3* probability goes down to zero,
     while the 4* probability goes up by the amount of the 3* probability
     see wish details on character page
     */
-    if (pityCounters[4] == adjustedGuarantees[4] - 1) {
-        probabilities[4] += probabilities[3];
-        probabilities[3] = 0;
+    if (pityCounters[4] >= pityLow[4] - 1) {
+        var cumulative = probabilities[3] + probabilities[4];
+        var incr = cumulative / (pityHit[4] - pityLow[4] + 1);
+        probabilities[4] = incr * (pityCounters[4] - pityLow[4] + 2);
+        probabilities[3] = cumulative - incr * (pityCounters[4] - pityLow[4] + 2);
     }
-    /*
-    if 5* pity is reached, 4* probability and 3* probability go down to zero,
-    while the 5* probability goes up by the amount of the 4* probability and 3* probability
-    */
-    if (pityCounters[5] == adjustedGuarantees[5] - 1) {
-        probabilities[5] += probabilities[4] + probabilities[3];
-        probabilities[3] = 0;
-        probabilities[4] = 0;
+    if (pityCounters[5] >= pityLow[5] - 1) {
+        var cumulativeTot = probabilities[3] + probabilities[4] + probabilities[5];
+        var cumulativeBound = probabilities[3] + probabilities[5];
+        var incr = cumulativeTot / (pityHit[5] - pityLow[5] + 1);
+        probabilities[5] = incr * (pityCounters[5] - pityLow[5] + 2);
+        probabilities[3] = cumulativeBound - incr * (pityCounters[5] - pityLow[5] + 2);
+        if (probabilities[3] < 0) {
+            probabilities[4] += probabilities[3];
+            probabilities[3] = 0;
+        }
+        if (probabilities[4] < 0) {
+            probabilities[4] = 0;
+        } 
     }
+    // try {
+    //     assert(probabilities[3] + probabilities[4] + probabilities[5] == 1, probabilities[3] + probabilities[4] + probabilities[5] + " is not 1, probabilities must add up to 1")
+    // } catch (e) {
+    //     console.error(e);
+    //     debugger;
+    // }
+    // if (pityCounters[4] == pityHit[4] - 1) {
+    //     probabilities[4] += probabilities[3];
+    //     probabilities[3] = 0;
+    // }
+    // /*
+    // if 5* pity is reached, 4* probability and 3* probability go down to zero,
+    // while the 5* probability goes up by the amount of the 4* probability and 3* probability
+    // */
+    // if (pityCounters[5] == pityHit[5] - 1) {
+    //     probabilities[5] += probabilities[4] + probabilities[3];
+    //     probabilities[3] = 0;
+    //     probabilities[4] = 0;
+    // }
     // now build the distribution
     var dist = buildDist(probabilities);
     // generate a random number in this interval
@@ -168,7 +188,7 @@ function pull(prob, pityCounters, pityLow, pityHit, pityAvg, adjustedGuarantees)
     } else if (result == 4) {
         pityCounters[4] = 0;
         pityCounters[5]++;
-        
+
     } else {
         pityCounters[4]++;
         pityCounters[5]++;
@@ -197,7 +217,7 @@ function main(wish) {
     };
     let sampleSize = 0x100000; // the number of pulls to do
     for (var i = 0; i < sampleSize; i++) {
-        var draw = pull(wish.probabilities, pityCounters, wish.pityLow, wish.pityHit, wish.pityAvg, adjustedGuarantees);
+        var draw = pull(wish.probabilities, pityCounters, wish.pityLow, wish.pityHit, wish.pityAvg);
         //console.log(i);
         //console.log(draw);
         if (draw[0] == "4" || draw[0] == "5") geoDist[4][draw[1]["4"]] = geoDist[4][draw[1]["4"]] == null ? 1 : geoDist[4][draw[1]["4"]] + 1;
@@ -206,7 +226,7 @@ function main(wish) {
         pivotResults[draw[0]]++;
     }
     // log the results for good measure
-    console.log(results);
+    // console.log(results);
     console.table(pivotResults);
     for (var i in geoDist) {
         for (var j in geoDist[i]) {
